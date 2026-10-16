@@ -37,13 +37,7 @@ jobs:
         run: xcodegen generate
       - name: Build & UI test macOS (T0.02)
         run: |
-          set -o pipefail
           xcodebuild \
-            -project SimplestNotes.xcodeproj \
-            -scheme SimplestNotes \
-            -destination 'platform=macOS' \
-            CODE_SIGNING_ALLOWED=NO \
-            test | xcpretty || xcodebuild \
             -project SimplestNotes.xcodeproj \
             -scheme SimplestNotes \
             -destination 'platform=macOS' \
