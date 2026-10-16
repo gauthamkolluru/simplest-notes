@@ -7,11 +7,16 @@ A minimal plain-text notes app: open → type. No formatting, no file names, no 
 
 ## Status
 
+Approved plan implemented through **Phase 6** core logic. **80** NotesCore unit tests pass on Linux (`swift test`).
+
 | Phase | Status |
 |-------|--------|
-| Design + ADRs + plan | Done |
-| **Phase 0** — repo scaffolding & CI | In progress |
-| Phase 1–7 | Not started |
+| 0–3 | Done (scaffold, local save, editor/onboarding, Drive icon + fake auth) |
+| 4 | Auth mapping done; live GoogleSignIn needs OAuth client on Mac |
+| 5–6 | Drive client + sync/conflicts done (mocked HTTP) |
+| 7 | Hardening / release pending |
+
+See [docs/PHASE_STATUS.md](docs/PHASE_STATUS.md).
 
 ## Docs
 

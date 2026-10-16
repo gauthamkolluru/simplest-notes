@@ -4,12 +4,20 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var model = AppViewModel()
     @StateObject private var connection = ConnectionViewModel()
+    @State private var conflictFileName: String?
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            EditorView(model: model)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            VStack(spacing: 0) {
+                if let conflictFileName {
+                    ConflictBanner(fileName: conflictFileName) {
+                        self.conflictFileName = nil
+                    }
+                }
+                EditorView(model: model)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
 
             DriveStatusButton(connection: connection)
                 .padding(12)
