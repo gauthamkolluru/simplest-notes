@@ -2,37 +2,63 @@
 
 A minimal plain-text notes app: open → type. No formatting, no file names, no save button. Text autosaves on-device and syncs to your Google Drive. No backend of our own.
 
-**Current status: design & plan only — awaiting approval before implementation.**
+**Platform:** iPhone, iPad, and Mac (native SwiftUI)  
+**License:** [MIT](LICENSE)
 
-## Documents (read these first)
+## Status
+
+| Phase | Status |
+|-------|--------|
+| Design + ADRs + plan | Done |
+| **Phase 0** — repo scaffolding & CI | In progress |
+| Phase 1–7 | Not started |
+
+## Docs
 
 | Doc | Purpose |
 |-----|---------|
-| [docs/DESIGN.md](docs/DESIGN.md) | Requirements, architecture, flows, data model |
-| [docs/adr/](docs/adr/README.md) | Architecture Decision Records (ADR-0001 … 0007) |
-| [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) | Phased plan: **tests first**, then implementation, every phase |
-| [docs/simplest-notes-design-review.pdf](docs/simplest-notes-design-review.pdf) | Full design review PDF |
-| [docs/assets/requirements-sketch.jpg](docs/assets/requirements-sketch.jpg) | Original requirements sketch |
+| [docs/DESIGN.md](docs/DESIGN.md) | Requirements, architecture, flows |
+| [docs/adr/](docs/adr/README.md) | Architecture Decision Records |
+| [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) | Phased plan (tests before implementation) |
+| [docs/SETUP.md](docs/SETUP.md) | Local build & Google Cloud setup |
 
-## Proposed stack (ADR-0001)
+## Layout
 
-- Native **SwiftUI** app for **iPhone, iPad, and Mac**
-- Pure **NotesCore** Swift package (unit-tested on Linux + macOS)
-- Google Drive via **GoogleSignIn** SDK + Drive API (`drive.file` scope)
-- Offline-first local file + sync engine that never silently discards text
+```
+Package.swift                 NotesCore (pure Swift, Linux-testable)
+Sources/NotesCore/            Domain logic
+Tests/NotesCoreTests/         Unit tests (T0.01+)
+App/SimplestNotes/            SwiftUI app shell
+App/SimplestNotesUITests/     XCUITests (T0.02+)
+project.yml                   XcodeGen project definition
+.github/workflows/ci.yml      Linux + macOS CI
+docs/                         Design, ADRs, plan
+```
 
-## How development will proceed (after approval)
+## Develop
 
-Each phase in [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md):
+### NotesCore (Linux or macOS)
 
-1. Document edge cases and write failing tests  
-2. Implement the functionality  
-3. Turn tests green, run CI, commit  
+```bash
+swift test
+```
 
-## Local run (after Phase 0+)
+### Full app (macOS with Xcode 15+)
 
-Will require Xcode 15+ on macOS. Details land in the README when scaffolding is approved and implemented.
+```bash
+brew install xcodegen   # once
+xcodegen generate
+open SimplestNotes.xcodeproj
+```
 
-## License
+Or from the CLI:
 
-TBD on approval (recommend MIT unless you prefer otherwise).
+```bash
+xcodegen generate
+xcodebuild -project SimplestNotes.xcodeproj -scheme SimplestNotes \
+  -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO test
+```
+
+## Development process
+
+Each phase: edge-case tests → failing tests → implement → green → commit. See [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).

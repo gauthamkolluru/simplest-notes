@@ -1,6 +1,6 @@
 # Simplest Notes — Phased Development Plan
 
-**Status:** Awaiting approval — **do not implement until explicitly approved**  
+**Status:** Approved 2026-10-16 — Phase 0 in progress  
 **Date:** 2026-10-16
 
 Every phase follows the same order:

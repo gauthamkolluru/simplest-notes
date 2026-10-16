@@ -1,0 +1,29 @@
+# Xcode / Swift
+.DS_Store
+/.build
+/Packages
+/*.xcodeproj
+!default.xcodeproj
+xcuserdata/
+DerivedData/
+.swiftpm/
+*.xcuserstate
+*.xcscmblueprint
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Local secrets
+GoogleService-Info.plist
+**/Secrets.xcconfig
+.env
+.env.*
+
+# Agent upload scratch (not part of the product)
+/uploads/
+/assets/
+
+# Netlify (if ever used)
+.netlify/
