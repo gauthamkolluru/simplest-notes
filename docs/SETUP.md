@@ -9,12 +9,14 @@
 ## Clone & generate
 
 ```bash
-git clone https://github.com/<you>/simplest-notes.git
+git clone https://github.com/gauthamkolluru/simplest-notes.git
 cd simplest-notes
 swift test                          # NotesCore (T0.01+)
 xcodegen generate
 open SimplestNotes.xcodeproj
 ```
+
+Public repo: https://github.com/gauthamkolluru/simplest-notes
 
 ## Google Cloud (needed from Phase 4)
 

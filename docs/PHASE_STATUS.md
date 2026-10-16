@@ -14,4 +14,4 @@
 
 **NotesCore:** `swift test` → **80 tests, 0 failures** (Linux).
 
-**GitHub:** Create public repo `simplest-notes` via Cursor **Create repo** (agent has no `gh` login).
+**GitHub:** https://github.com/gauthamkolluru/simplest-notes exists (public). Agent push blocked until a `GITHUB_TOKEN` with repo write access is provided.
