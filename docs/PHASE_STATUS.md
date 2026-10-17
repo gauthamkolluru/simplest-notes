@@ -14,4 +14,4 @@
 
 **NotesCore:** `swift test` → **80 tests, 0 failures** (Linux).
 
-**GitHub:** https://github.com/gauthamkolluru/simplest-notes exists (public). Agent push blocked until a `GITHUB_TOKEN` with repo write access is provided.
+**GitHub:** https://github.com/gauthamkolluru/simplest-notes — `main` pushed (public).
