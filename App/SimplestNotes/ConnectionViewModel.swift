@@ -10,6 +10,13 @@ final class ConnectionViewModel: ObservableObject {
 
     let controller: ConnectionController
 
+    /// Called after a successful interactive sign-in (not restore).
+    var onBecameConnected: (() async -> Void)?
+    /// Called before auth disconnect completes clearing tokens (flush/clear sync).
+    var onWillDisconnect: (() async -> Void)?
+    /// Called before switch-account disconnect (same clear as disconnect).
+    var onWillSwitchAccount: (() async -> Void)?
+
     init(auth: any AuthProviding = FakeAuth()) {
         self.controller = ConnectionController(auth: auth)
         self.controller.onChange = { [weak self] in
@@ -20,9 +27,20 @@ final class ConnectionViewModel: ObservableObject {
         pull()
     }
 
+    @discardableResult
+    func restoreSession() async -> Bool {
+        let ok = await controller.restoreSession()
+        pull()
+        return ok
+    }
+
     func handleIconTap() async {
+        let before = controller.isConnected
         await controller.handleIconTap()
         pull()
+        if !before, controller.isConnected {
+            await onBecameConnected?()
+        }
     }
 
     func dismissSheet() {
@@ -31,13 +49,18 @@ final class ConnectionViewModel: ObservableObject {
     }
 
     func disconnect() async {
+        await onWillDisconnect?()
         await controller.disconnect()
         pull()
     }
 
     func switchAccount() async {
+        await onWillSwitchAccount?()
         await controller.switchAccount()
         pull()
+        if controller.isConnected {
+            await onBecameConnected?()
+        }
     }
 
     private func pull() {

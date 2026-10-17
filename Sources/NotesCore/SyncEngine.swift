@@ -43,21 +43,31 @@ public final class SyncEngine: @unchecked Sendable {
         self.pushDelay = pushDelay
         self.tokenRefresh = tokenRefresh
         self.pushDebouncer = Debouncer(delay: pushDelay, clock: clock) { [weak self] _ in
-            Task { await self?.pushNow() }
+            guard let self else { return }
+            Task { await self.pushNow() }
         }
     }
 
     public func noteLocalChanged() {
+        guard !cancelled else { return }
         pushDebouncer.schedule(())
     }
 
     public func flushPush() {
+        guard !cancelled else { return }
         pushDebouncer.flush()
     }
 
     public func cancel() {
         cancelled = true
         pushDebouncer.cancel()
+    }
+
+    /// Stop sync and clear Drive linkage (ADR-0006). Local note text is kept.
+    public func clearSyncBaseAndCancel() {
+        cancel()
+        folderId = nil
+        try? store.clearSyncBase()
     }
 
     public func pull() async {
@@ -90,10 +100,12 @@ public final class SyncEngine: @unchecked Sendable {
         guard let fileId = state.driveFileId else { return }
         do {
             let meta = try await drive.metadata(fileId: fileId)
+            guard !cancelled else { return }
             if meta.version == state.lastSyncedRemoteVersion {
                 return
             }
             let download = try await drive.download(fileId: fileId)
+            guard !cancelled else { return }
             let local = (try? store.load()) ?? ""
             let decision = ConflictResolver.decide(
                 local: local,
@@ -118,14 +130,17 @@ public final class SyncEngine: @unchecked Sendable {
         do {
             if let fileId = state.driveFileId {
                 let meta = try await drive.metadata(fileId: fileId)
+                guard !cancelled else { return }
                 if meta.version == state.lastSyncedRemoteVersion {
                     let uploaded = try await drive.upload(fileId: fileId, text: local)
+                    guard !cancelled else { return }
                     try markSynced(text: local, meta: uploaded)
                     backoff = 2
                     onEvent?(.syncIssue(false))
                     return
                 }
                 let download = try await drive.download(fileId: fileId)
+                guard !cancelled else { return }
                 let decision = ConflictResolver.decide(
                     local: local,
                     remote: download.text,
@@ -151,11 +166,16 @@ public final class SyncEngine: @unchecked Sendable {
     }
 
     private func firstConnectUnlocked(localText: String) async {
+        guard !cancelled else { return }
         do {
             let folder = try await ensureFolderId()
+            guard !cancelled else { return }
             if let fileId = try await drive.findNoteFile(folderId: folder) {
+                guard !cancelled else { return }
                 let download = try await drive.download(fileId: fileId)
+                guard !cancelled else { return }
                 let meta = try await drive.metadata(fileId: fileId)
+                guard !cancelled else { return }
                 switch ConflictResolver.decideFirstConnect(local: localText, remote: download.text) {
                 case .createRemoteFromLocal:
                     break
@@ -168,6 +188,7 @@ public final class SyncEngine: @unchecked Sendable {
                 case .takeRemoteSaveLocalAsConflict:
                     let name = ConflictResolver.conflictCopyFileName(now: clock.now, deviceName: deviceName, uniqueSalt: UUID().uuidString.prefix(4).description)
                     _ = try await drive.uploadConflictCopy(folderId: folder, text: localText, fileName: name)
+                    guard !cancelled else { return }
                     try store.save(download.text)
                     try markSynced(text: download.text, meta: meta)
                     onEvent?(.editorTextReplaced(download.text))
@@ -175,8 +196,11 @@ public final class SyncEngine: @unchecked Sendable {
                 }
             } else {
                 let meta = try await drive.createNoteFile(folderId: folder, text: localText)
+                guard !cancelled else { return }
                 try markSynced(text: localText, meta: meta)
             }
+        } catch DriveClientError.unauthorized {
+            await handleUnauthorized()
         } catch {
             onEvent?(.syncIssue(true))
         }
@@ -188,6 +212,7 @@ public final class SyncEngine: @unchecked Sendable {
         remote: String,
         meta: DriveFileMetadata
     ) async throws {
+        guard !cancelled else { return }
         switch decision {
         case .nothing:
             return
@@ -197,17 +222,20 @@ public final class SyncEngine: @unchecked Sendable {
             onEvent?(.editorTextReplaced(remote))
         case .uploadLocal:
             let uploaded = try await drive.upload(fileId: meta.id, text: local)
+            guard !cancelled else { return }
             try markSynced(text: local, meta: uploaded)
         case .markSynced:
             try markSynced(text: local, meta: meta)
         case .keepRemoteSaveLocalAsConflict:
             let folderId = try await ensureFolderId()
+            guard !cancelled else { return }
             let name = ConflictResolver.conflictCopyFileName(
                 now: clock.now,
                 deviceName: deviceName,
                 uniqueSalt: UUID().uuidString.prefix(4).description
             )
             _ = try await drive.uploadConflictCopy(folderId: folderId, text: local, fileName: name)
+            guard !cancelled else { return }
             try store.save(remote)
             try markSynced(text: remote, meta: meta)
             onEvent?(.editorTextReplaced(remote))
@@ -216,6 +244,7 @@ public final class SyncEngine: @unchecked Sendable {
     }
 
     private func markSynced(text: String, meta: DriveFileMetadata) throws {
+        guard !cancelled else { return }
         var state = store.loadSyncState()
         state.driveFileId = meta.id
         state.lastSyncedRemoteVersion = meta.version
@@ -236,6 +265,7 @@ public final class SyncEngine: @unchecked Sendable {
     }
 
     private func recreateFromLocal() async {
+        guard !cancelled else { return }
         do {
             let local = try store.load()
             var state = store.loadSyncState()
@@ -251,7 +281,9 @@ public final class SyncEngine: @unchecked Sendable {
     }
 
     private func handleUnauthorized() async {
+        guard !cancelled else { return }
         if let tokenRefresh, await tokenRefresh() {
+            guard !cancelled else { return }
             await pushUnlocked()
             return
         }
@@ -259,10 +291,19 @@ public final class SyncEngine: @unchecked Sendable {
     }
 
     private func scheduleBackoffRetry() {
+        guard !cancelled else { return }
         let delay = backoff
         backoff = min(backoff * 2, 300)
         _ = clock.schedule(after: delay) { [weak self] in
-            Task { await self?.pushNow() }
+            guard let self else { return }
+            // Keep work on the clock callback's thread of control for ManualClock tests;
+            // wrap in Task so DispatchClock (main queue) can still call async pushNow.
+            Task { [weak self] in
+                await self?.pushNow()
+            }
         }
     }
+
+    /// Test seam: current offline backoff delay that will be used for the *next* schedule.
+    public var nextBackoffDelay: TimeInterval { backoff }
 }

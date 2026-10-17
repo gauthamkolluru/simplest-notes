@@ -10,6 +10,9 @@ options:
 packages:
   NotesCore:
     path: .
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: "8.0.0"
 
 settings:
   base:
@@ -26,6 +29,11 @@ targets:
     dependencies:
       - package: NotesCore
         product: NotesCore
+      - package: GoogleSignIn
+        product: GoogleSignIn
+    configFiles:
+      Debug: Config/Shared.xcconfig
+      Release: Config/Shared.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.simplestnotes.SimplestNotes
@@ -37,6 +45,17 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         # Local Mac runs: let Xcode manage signing (Signing & Capabilities → your Team).
         CODE_SIGN_STYLE: Automatic
+    info:
+      path: App/SimplestNotes/Info.plist
+      properties:
+        CFBundleDisplayName: Simplest Notes
+        UILaunchScreen: {}
+        GIDClientID: $(GOOGLE_CLIENT_ID)
+        CFBundleURLTypes:
+          - CFBundleURLName: GoogleSignIn
+            CFBundleTypeRole: Editor
+            CFBundleURLSchemes:
+              - $(GOOGLE_REVERSED_CLIENT_ID)
     scheme:
       testTargets:
         - SimplestNotesUITests

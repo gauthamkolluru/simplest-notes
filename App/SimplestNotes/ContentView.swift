@@ -2,51 +2,56 @@ import NotesCore
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var model = AppViewModel()
-    @StateObject private var connection = ConnectionViewModel()
-    @State private var conflictFileName: String?
+    @StateObject private var session: AppSession
     @Environment(\.scenePhase) private var scenePhase
+
+    init(session: AppSession = .make()) {
+        _session = StateObject(wrappedValue: session)
+    }
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
             VStack(spacing: 0) {
-                if let conflictFileName {
+                if let conflictFileName = session.conflictFileName {
                     ConflictBanner(fileName: conflictFileName) {
-                        self.conflictFileName = nil
+                        session.dismissConflictBanner()
                     }
                 }
-                EditorView(model: model)
+                EditorView(model: session.app)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
-            DriveStatusButton(connection: connection)
+            DriveStatusButton(connection: session.connection)
                 .padding(12)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityIdentifier("blankRoot")
         .modifier(OnboardingSheetModifier(
-            isPresented: $model.showOnboarding,
+            isPresented: Binding(
+                get: { session.app.showOnboarding },
+                set: { session.app.showOnboarding = $0 }
+            ),
             onConnect: {
-                model.finishOnboardingConnect()
-                Task { await connection.handleIconTap() }
+                session.app.finishOnboardingConnect()
+                Task { await session.connection.handleIconTap() }
             },
-            onNotNow: { model.finishOnboardingNotNow() }
+            onNotNow: { session.app.finishOnboardingNotNow() }
         ))
         .sheet(item: Binding(
-            get: { connection.sheet.map(AccountSheetItem.init) },
-            set: { if $0 == nil { connection.dismissSheet() } }
+            get: { session.connection.sheet.map(AccountSheetItem.init) },
+            set: { if $0 == nil { session.connection.dismissSheet() } }
         )) { item in
             AccountSheetView(
                 email: item.email,
-                onDisconnect: { Task { await connection.disconnect() } },
-                onSwitchAccount: { Task { await connection.switchAccount() } }
+                onDisconnect: { Task { await session.connection.disconnect() } },
+                onSwitchAccount: { Task { await session.connection.switchAccount() } }
             )
 #if os(iOS)
             .presentationDetents([.medium])
 #endif
         }
         .safeAreaInset(edge: .bottom) {
-            if let message = connection.inlineError {
+            if let message = session.connection.inlineError {
                 Text(message)
                     .font(.footnote)
                     .foregroundStyle(.red)
@@ -55,10 +60,14 @@ struct ContentView: View {
                     .accessibilityIdentifier("authInlineError")
             }
         }
+        .task {
+            await session.start()
+        }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .inactive || phase == .background {
-                model.flush()
-            }
+            session.scenePhaseChanged(phase)
+        }
+        .onOpenURL { url in
+            session.handleOpenURL(url)
         }
     }
 }

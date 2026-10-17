@@ -7,13 +7,13 @@ A minimal plain-text notes app: open → type. No formatting, no file names, no 
 
 ## Status
 
-Approved plan implemented through **Phase 6** core logic. **80** NotesCore unit tests pass on Linux (`swift test`).
+Approved plan implemented through **Phase 6** (core + app wiring). NotesCore unit tests pass on Linux (`swift test`).
 
 | Phase | Status |
 |-------|--------|
-| 0–3 | Done (scaffold, local save, editor/onboarding, Drive icon + fake auth) |
-| 4 | Auth mapping done; live GoogleSignIn needs OAuth client on Mac |
-| 5–6 | Drive client + sync/conflicts done (mocked HTTP) |
+| 0–3 | Done (scaffold, local save, editor/onboarding, Drive icon; FakeAuth for UI tests) |
+| 4 | Live GoogleSignIn SDK wired — paste OAuth client ID in `Config/Secrets.xcconfig` ([SETUP.md](docs/SETUP.md)) |
+| 5–6 | Drive client + SyncEngine + UI wiring (connect / push / pull / conflicts) |
 | 7 | Hardening / release pending |
 
 See [docs/PHASE_STATUS.md](docs/PHASE_STATUS.md).
