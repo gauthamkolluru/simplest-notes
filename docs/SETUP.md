@@ -18,6 +18,24 @@ open SimplestNotes.xcodeproj
 
 Public repo: https://github.com/gauthamkolluru/simplest-notes
 
+## Run in Xcode (if “nothing happens”)
+
+1. Pull latest, regenerate, reopen:
+   ```bash
+   git pull
+   xcodegen generate
+   open SimplestNotes.xcodeproj
+   ```
+2. Top toolbar: scheme **SimplestNotes**, destination an **iPhone simulator** (not “Any iOS Device”).
+3. **Signing & Capabilities**: enable **Automatically manage signing**, pick your **Team** (Personal Team / Apple ID is fine).
+4. Press ▶ (`Cmd+R`). Watch the top status bar — if it flashes red, open the **Issue navigator** (⚠ icon) for the error.
+5. When it works you should see:
+   - grey placeholder **Start typing…**
+   - a Drive cloud icon top-right
+   - on first launch, a **Connect Google Drive** sheet
+
+If the Simulator app opens but stays on the home screen, look for the **Simplest Notes** icon and tap it.
+
 ## Google Cloud (needed from Phase 4)
 
 1. Create a Google Cloud project.

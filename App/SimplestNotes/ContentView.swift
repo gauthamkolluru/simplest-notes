@@ -24,16 +24,14 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityIdentifier("blankRoot")
-        .sheet(isPresented: $model.showOnboarding) {
-            OnboardingView(
-                onConnect: {
-                    model.finishOnboardingConnect()
-                    Task { await connection.handleIconTap() }
-                },
-                onNotNow: { model.finishOnboardingNotNow() }
-            )
-            .presentationDetents([.medium])
-        }
+        .modifier(OnboardingSheetModifier(
+            isPresented: $model.showOnboarding,
+            onConnect: {
+                model.finishOnboardingConnect()
+                Task { await connection.handleIconTap() }
+            },
+            onNotNow: { model.finishOnboardingNotNow() }
+        ))
         .sheet(item: Binding(
             get: { connection.sheet.map(AccountSheetItem.init) },
             set: { if $0 == nil { connection.dismissSheet() } }
@@ -43,7 +41,9 @@ struct ContentView: View {
                 onDisconnect: { Task { await connection.disconnect() } },
                 onSwitchAccount: { Task { await connection.switchAccount() } }
             )
+#if os(iOS)
             .presentationDetents([.medium])
+#endif
         }
         .safeAreaInset(edge: .bottom) {
             if let message = connection.inlineError {
@@ -59,6 +59,21 @@ struct ContentView: View {
             if phase == .inactive || phase == .background {
                 model.flush()
             }
+        }
+    }
+}
+
+private struct OnboardingSheetModifier: ViewModifier {
+    @Binding var isPresented: Bool
+    var onConnect: () -> Void
+    var onNotNow: () -> Void
+
+    func body(content: Content) -> some View {
+        content.sheet(isPresented: $isPresented) {
+            OnboardingView(onConnect: onConnect, onNotNow: onNotNow)
+#if os(iOS)
+                .presentationDetents([.medium])
+#endif
         }
     }
 }

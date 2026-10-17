@@ -12,21 +12,23 @@ struct DriveStatusButton: View {
             ZStack(alignment: .topTrailing) {
                 Image(systemName: "externaldrive.fill.badge.icloud")
                     .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(style.appearance == .active ? Color.accentColor : Color.secondary.opacity(0.45))
-                    .font(.system(size: 18))
+                    .foregroundStyle(style.appearance == .active ? Color.accentColor : Color.primary.opacity(0.55))
+                    .font(.system(size: 22))
+                    .padding(8)
+                    .background(.ultraThinMaterial, in: Circle())
                 if style.showsSpinner {
                     ProgressView()
                         .controlSize(.mini)
-                        .offset(x: 10, y: -8)
+                        .offset(x: 12, y: -10)
                 }
                 if style.showsWarningBadge {
                     Circle()
                         .fill(Color.orange)
-                        .frame(width: 7, height: 7)
-                        .offset(x: 8, y: -6)
+                        .frame(width: 8, height: 8)
+                        .offset(x: 10, y: -8)
                 }
             }
-            .frame(width: 36, height: 36)
+            .frame(width: 44, height: 44)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
