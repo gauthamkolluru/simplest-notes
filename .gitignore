@@ -18,8 +18,10 @@ DerivedData/
 # Local secrets
 GoogleService-Info.plist
 **/Secrets.xcconfig
+Config/Secrets.xcconfig
 .env
 .env.*
+
 
 # Agent upload scratch (not part of the product)
 /uploads/

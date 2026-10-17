@@ -19,7 +19,9 @@ public struct AtomicFileWriter: NoteFileWriting {
         let temp = dir.appendingPathComponent(".tmp-\(UUID().uuidString)")
         try data.write(to: temp, options: .atomic)
         if FileManager.default.fileExists(atPath: url.path) {
-            _ = try FileManager.default.replaceItemAt(url, withItemAt: temp)
+            // replaceItemAt is unreliable on Linux Foundation; remove+move keeps a single final path.
+            try FileManager.default.removeItem(at: url)
+            try FileManager.default.moveItem(at: temp, to: url)
         } else {
             try FileManager.default.moveItem(at: temp, to: url)
         }
@@ -102,6 +104,11 @@ public final class LocalNoteStore {
         } catch {
             throw LocalNoteStoreError.writeFailed(underlyingDescription: String(describing: error))
         }
+    }
+
+    /// Clears Drive file id / sync base (ADR-0006). Leaves `note.txt` untouched.
+    public func clearSyncBase() throws {
+        try saveSyncState(.defaults)
     }
 
     private func backupTimestamp() -> String {

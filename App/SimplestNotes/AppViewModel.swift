@@ -13,6 +13,9 @@ final class AppViewModel: ObservableObject {
     private let onboardingStore: OnboardingStoring
     private let clock: any Clock
 
+    /// Fired after a successful local autosave (marks dirty). Wired to SyncEngine.push debounce.
+    var onLocalChanged: (() -> Void)?
+
     init(
         store: LocalNoteStore? = nil,
         onboardingStore: OnboardingStoring = UserDefaultsOnboardingStore(),
@@ -42,6 +45,9 @@ final class AppViewModel: ObservableObject {
                 self?.saveErrorMessage = error.map { _ in "Couldn't save locally. Your next edit will retry." }
             }
         }
+        autosave.onLocalChanged = { [weak self] in
+            self?.onLocalChanged?()
+        }
     }
 
     func textEdited(_ newValue: String) {
@@ -53,10 +59,24 @@ final class AppViewModel: ObservableObject {
         autosave.flush()
     }
 
+    func applyRemoteText(_ newValue: String) {
+        text = newValue
+    }
+
+    func refreshOnboarding(hasRestorableGoogleSession: Bool) {
+        showOnboarding = OnboardingPolicy.shouldShow(
+            store: onboardingStore,
+            hasRestorableGoogleSession: hasRestorableGoogleSession
+        )
+    }
+
+    func noteHasRestorableSession() {
+        showOnboarding = false
+    }
+
     func finishOnboardingConnect() {
         OnboardingPolicy.markCompleted(store: onboardingStore)
         showOnboarding = false
-        // Real connect arrives in Phase 4; Phase 2 only dismisses.
     }
 
     func finishOnboardingNotNow() {

@@ -20,6 +20,36 @@ public final class ConnectionController: @unchecked Sendable {
         self.auth = auth
     }
 
+    /// Restore a prior Google session at launch (no UI). Returns whether connected.
+    @discardableResult
+    public func restoreSession() async -> Bool {
+        guard case .notConnected = currentState() else { return isConnected }
+        if let result = await auth.restorePreviousSignIn(), case .success(let email) = result {
+            setState(.connected(email: email))
+            return true
+        }
+        return false
+    }
+
+    public var isConnected: Bool {
+        if case .connected = currentState() { return true }
+        return false
+    }
+
+    public var connectedEmail: String? {
+        if case .connected(let email, _) = currentState() { return email }
+        return nil
+    }
+
+    public func setSyncIssue(_ issue: Bool) {
+        guard case .connected(let email, _) = currentState() else { return }
+        setState(.connected(email: email, syncIssue: issue))
+    }
+
+    public func applyAuthExpired() {
+        setState(.authExpired)
+    }
+
     public func handleIconTap() async {
         let style = DriveIconStyle.from(currentState())
         guard style.acceptsTap else { return }

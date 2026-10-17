@@ -9,6 +9,7 @@ final class LaunchUITests: XCTestCase {
     /// T0.02 — app targets build and launch to a blank screen in UI test.
     func test_T0_02_appLaunchesToBlankScreen() throws {
         let app = XCUIApplication()
+        app.launchArguments += ["-ui-testing", "-skip-onboarding"]
         app.launch()
         XCTAssertTrue(app.wait(for: .runningForeground, timeout: 10))
         let root = app.otherElements["blankRoot"]

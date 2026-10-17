@@ -1,0 +1,7 @@
+// Defaults so the project generates/builds before Secrets.xcconfig exists.
+// Prefer Config/Secrets.xcconfig (gitignored) for real values — see SETUP.md.
+
+GOOGLE_CLIENT_ID = PASTE_IOS_CLIENT_ID.apps.googleusercontent.com
+GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.PASTE_IOS_CLIENT_ID
+
+#include? "Secrets.xcconfig"
